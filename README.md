@@ -11,13 +11,13 @@ Library Usage
 func readme_example_normal() {
     // Standard operation
 
-    value := vlq.Vlq(30000)
-    byteCount := value.EncodedByteCount()
+    value := Rvlq(30000)
+    byteCount := value.EncodedSize()
     buffer := make([]byte, byteCount)
     value.EncodeTo(buffer)
     fmt.Printf("Encoded %v into the byte sequence %v\n", value, buffer)
 
-    decodedValue, bytesUsed, isComplete := vlq.DecodeFrom(buffer)
+    decodedValue, bytesUsed, isComplete := DecodeRvlqFrom(buffer)
     if !isComplete {
         // TODO: Error handling
     }
@@ -27,23 +27,23 @@ func readme_example_normal() {
 
 Result:
 
-	Encoded 30000 into the byte sequence [129 234 48]
-	Decoded value 30000 from 3 bytes
+    Encoded 30000 into the byte sequence [129 234 48]
+    Decoded value 30000 from 3 bytes
 
 
 ```golang
 func readme_example_split_reads() {
     // Simulate the VLQ being split across two reads
 
-    value := vlq.Vlq(30000)
-    byteCount := value.EncodedByteCount()
+    value := Rvlq(30000)
+    byteCount := value.EncodedSize()
     buffer := make([]byte, byteCount)
     value.EncodeTo(buffer)
 
     buffer1 := buffer[:2]
     buffer2 := buffer[2:]
 
-    var decodedValue Vlq
+    var decodedValue Rvlq
     bytesUsed, isComplete := decodedValue.DecodeFrom(buffer1)
     fmt.Printf("Used %v bytes decoding VLQ value. Is complete = %v\n", bytesUsed, isComplete)
 
@@ -56,21 +56,21 @@ func readme_example_split_reads() {
 
 Result:
 
-	Used 2 bytes decoding VLQ value. Is complete = false
-	Used 1 bytes decoding VLQ value. Is complete = true
-	Decoded value: 30000
+    Used 2 bytes decoding VLQ value. Is complete = false
+    Used 1 bytes decoding VLQ value. Is complete = true
+    Decoded value: 30000
 
 
 ```golang
 func readme_example_reversed() {
     // Reversed mode, which allows reading the value from the end of a buffer
 
-    value := vlq.Vlq(30000)
+    value := Rvlq(30000)
     buffer := make([]byte, 10)
     value.EncodeReversedTo(buffer)
     fmt.Printf("Encoded %v into the byte sequence %v\n", value, buffer)
 
-    decodedValue, bytesUsed, err := vlq.DecodeReversedFrom(buffer)
+    decodedValue, bytesUsed, err := DecodeRvlqReversedFrom(buffer)
     if err != nil {
         // TODO: Error handling
     }
@@ -80,5 +80,5 @@ func readme_example_reversed() {
 
 Result:
 
-	Encoded 30000 into the byte sequence [0 0 0 0 0 0 0 48 234 129]
-	Decoded value 30000 from 3 bytes
+    Encoded 30000 into the byte sequence [0 0 0 0 0 0 0 48 234 129]
+    Decoded value 30000 from 3 bytes
