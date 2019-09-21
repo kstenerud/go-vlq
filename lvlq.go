@@ -13,7 +13,7 @@ type Lvlq uint64
 // Get the number of bytes required to encode this RVLQ
 func (this Lvlq) EncodedSize() int {
 	value := this
-	if value > 0x0100000000000000 || value == 0 {
+	if value == 0 {
 		return 1
 	}
 	size := 0
