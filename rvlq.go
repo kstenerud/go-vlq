@@ -4,10 +4,6 @@ package vlq
 // All rights reserved.
 // Distributed under MIT license.
 
-import (
-	"fmt"
-)
-
 type Rvlq uint64
 
 // Get the maximum value that can be stored in a RVLQ of the selected byte count
@@ -29,80 +25,81 @@ func (this Rvlq) EncodedSize() int {
 	return size
 }
 
-// Encode this RVLQ to a buffer. Returns an error if the buffer isn't big enough.
-func (this Rvlq) EncodeTo(buffer []byte) (bytesEncoded int, err error) {
+// Encode this RVLQ to a buffer.
+// Returns false and the number of bytes it attempted to write if the buffer isn't big enough.
+func (this Rvlq) EncodeTo(buffer []byte) (encodedByteCount int, ok bool) {
 	value := this
-	bytesEncoded = this.EncodedSize()
-	if bytesEncoded > len(buffer) {
-		return 0, fmt.Errorf("%v free bytes required to encode, but only %v available", this.EncodedSize(), len(buffer))
+	encodedByteCount = this.EncodedSize()
+	if encodedByteCount > len(buffer) {
+		return encodedByteCount, false
 	}
-	for i := bytesEncoded - 1; i >= 0; i-- {
+	for i := encodedByteCount - 1; i >= 0; i-- {
 		nextByte := byte(value >> uint(7*i) & 0x7f)
 		if i > 0 {
 			nextByte |= 0x80
 		}
-		buffer[bytesEncoded-i-1] = nextByte
+		buffer[encodedByteCount-i-1] = nextByte
 	}
-	return bytesEncoded, nil
+	return encodedByteCount, true
 }
 
 // Decode this RVLQ from a buffer. Returns true for isComplete once the VLQ
 // is fully decoded (i.e. it has encountered a byte with the high bit cleared).
 // This allows for progressive decoding of the VLQ value across multiple buffers.
-func (this *Rvlq) DecodeFrom(buffer []byte) (bytesDecoded int, isComplete bool) {
+func (this *Rvlq) DecodeFrom(buffer []byte) (decodedByteCount int, isComplete bool) {
 	for _, v := range buffer {
 		*this = *this<<7 | Rvlq(v&0x7f)
-		bytesDecoded++
+		decodedByteCount++
 		if v&0x80 == 0 {
-			return bytesDecoded, true
+			return decodedByteCount, true
 		}
 	}
-	return bytesDecoded, false
+	return decodedByteCount, false
 }
 
-func DecodeRvlqFrom(buffer []byte) (value Rvlq, bytesDecoded int, isComplete bool) {
-	bytesDecoded, isComplete = value.DecodeFrom(buffer)
-	return value, bytesDecoded, isComplete
+func DecodeRvlqFrom(buffer []byte) (value Rvlq, decodedByteCount int, isComplete bool) {
+	decodedByteCount, isComplete = value.DecodeFrom(buffer)
+	return value, decodedByteCount, isComplete
 }
 
 // Encode this RVLQ in reverse order to the end of a buffer.
-// Returns an error if the buffer isn't big enough.
-func (this Rvlq) EncodeReversedTo(buffer []byte) (bytesEncoded int, err error) {
+// Returns false and the number of bytes it attempted to write if the buffer isn't big enough.
+func (this Rvlq) EncodeReversedTo(buffer []byte) (encodedByteCount int, ok bool) {
 	value := this
-	bytesEncoded = this.EncodedSize()
-	if bytesEncoded > len(buffer) {
-		return 0, fmt.Errorf("%v free bytes required to encode, but only %v available", this.EncodedSize(), len(buffer))
+	encodedByteCount = this.EncodedSize()
+	if encodedByteCount > len(buffer) {
+		return encodedByteCount, false
 	}
-	start := len(buffer) - bytesEncoded
-	for i := bytesEncoded - 1; i >= 0; i-- {
+	start := len(buffer) - encodedByteCount
+	for i := encodedByteCount - 1; i >= 0; i-- {
 		nextByte := byte(value >> uint(7*i) & 0x7f)
 		if i > 0 {
 			nextByte |= 0x80
 		}
 		buffer[start+i] = nextByte
 	}
-	return bytesEncoded, nil
+	return encodedByteCount, true
 }
 
 // Decode this RVLQ in reverse order from the end of a buffer. Unlike DecodeFrom(),
 // the reversed version must have all encoded bytes present in the buffer to
 // decode.
-func (this *Rvlq) DecodeReversedFrom(buffer []byte) (bytesDecoded int, err error) {
+func (this *Rvlq) DecodeReversedFrom(buffer []byte) (decodedByteCount int, ok bool) {
 	for i := len(buffer) - 1; i >= 0; i-- {
 		v := buffer[i]
 		*this = *this<<7 | Rvlq(v&0x7f)
-		bytesDecoded++
+		decodedByteCount++
 		if v&0x80 == 0 {
-			return bytesDecoded, nil
+			return decodedByteCount, true
 		}
 	}
-	return 0, fmt.Errorf("Buffer does not contain the complete encoded reverse RVLQ value")
+	return decodedByteCount, false
 }
 
 // Decode a RVLQ value in reverse order from the end of a buffer. Unlike DecodeFrom(),
 // the reversed version must have all encoded bytes present in the buffer to
 // decode.
-func DecodeRvlqReversedFrom(buffer []byte) (value Rvlq, bytesDecoded int, err error) {
-	bytesDecoded, err = value.DecodeReversedFrom(buffer)
-	return value, bytesDecoded, err
+func DecodeRvlqReversedFrom(buffer []byte) (value Rvlq, decodedByteCount int, ok bool) {
+	decodedByteCount, ok = value.DecodeReversedFrom(buffer)
+	return value, decodedByteCount, ok
 }

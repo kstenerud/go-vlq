@@ -15,9 +15,9 @@ func assertRvlqEncodedReversed(t *testing.T, value int, expectedNonReversedEncod
 	actualEncoded := make([]byte, inflatedByteCount)
 	vlq := Rvlq(value)
 
-	bytesUsed, err := vlq.EncodeReversedTo(actualEncoded)
-	if err != nil {
-		t.Error(err)
+	bytesUsed, ok := vlq.EncodeReversedTo(actualEncoded)
+	if !ok {
+		t.Error("Failed to encode reversed RVLQ")
 		return
 	}
 	if bytesUsed != byteCount {
@@ -28,9 +28,9 @@ func assertRvlqEncodedReversed(t *testing.T, value int, expectedNonReversedEncod
 		t.Errorf("Expected %v but got %v", expectedEncoded, actualEncoded)
 		return
 	}
-	decoded, bytesUsed, err := DecodeRvlqReversedFrom(actualEncoded)
-	if err != nil {
-		t.Error(err)
+	decoded, bytesUsed, ok := DecodeRvlqReversedFrom(actualEncoded)
+	if !ok {
+		t.Error("Failed to decode reversed RVLQ")
 		return
 	}
 	if bytesUsed != byteCount {
@@ -46,9 +46,9 @@ func assertRvlqEncoded(t *testing.T, value int, expectedEncoded []byte) {
 	vlq := Rvlq(value)
 	byteCount := vlq.EncodedSize()
 	actualEncoded := make([]byte, byteCount)
-	bytesUsed, err := vlq.EncodeTo(actualEncoded)
-	if err != nil {
-		t.Error(err)
+	bytesUsed, ok := vlq.EncodeTo(actualEncoded)
+	if !ok {
+		t.Error("Failed to encode RVLQ")
 		return
 	}
 	if bytesUsed != byteCount {

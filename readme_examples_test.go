@@ -50,9 +50,9 @@ func readme_example_reversed() {
 	value.EncodeReversedTo(buffer)
 	fmt.Printf("Encoded %v into the byte sequence %v\n", value, buffer)
 
-	decodedValue, bytesUsed, err := DecodeRvlqReversedFrom(buffer)
-	if err != nil {
-		// TODO: Error handling
+	decodedValue, bytesUsed, ok := DecodeRvlqReversedFrom(buffer)
+	if !ok {
+		// TODO: Didn't find end of sequence
 	}
 	fmt.Printf("Decoded value %v from %v bytes\n", decodedValue, bytesUsed)
 }

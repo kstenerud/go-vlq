@@ -4,10 +4,6 @@ package vlq
 // All rights reserved.
 // Distributed under MIT license.
 
-import (
-	"fmt"
-)
-
 type Lvlq uint64
 
 // Get the number of bytes required to encode this RVLQ
@@ -24,16 +20,17 @@ func (this Lvlq) EncodedSize() int {
 	return size
 }
 
-// Encode this LVLQ to a buffer. Returns an error if the buffer isn't big enough.
-func (this Lvlq) EncodeTo(buffer []byte) (encodedByteCount int, err error) {
+// Encode this LVLQ to a buffer.
+// Returns false and the number of bytes it attempted to write if the buffer isn't big enough.
+func (this Lvlq) EncodeTo(buffer []byte) (encodedByteCount int, ok bool) {
 	value := this
 	encodedByteCount = this.EncodedSize()
 	if encodedByteCount > len(buffer) {
-		return 0, fmt.Errorf("%v free bytes required to encode, but only %v available", this.EncodedSize(), len(buffer))
+		return encodedByteCount, false
 	}
 	if value == 0 {
 		buffer[0] = 0
-		return 1, nil
+		return 1, true
 	}
 
 	groupCount := encodedByteCount
@@ -59,7 +56,7 @@ func (this Lvlq) EncodeTo(buffer []byte) (encodedByteCount int, err error) {
 		buffer[index] = nextByte
 		value >>= 7
 	}
-	return encodedByteCount, nil
+	return encodedByteCount, true
 }
 
 // Decode this LVLQ from a buffer. Returns true for isComplete once the VLQ
@@ -82,17 +79,17 @@ func DecodeLvlqFrom(buffer []byte) (value Lvlq, decodedByteCount int, isComplete
 }
 
 // Encode this LVLQ in reverse order to the end of a buffer.
-// Returns an error if the buffer isn't big enough.
-func (this Lvlq) EncodeReversedTo(buffer []byte) (encodedByteCount int, err error) {
+// Returns false and the number of bytes it attempted to write if the buffer isn't big enough.
+func (this Lvlq) EncodeReversedTo(buffer []byte) (encodedByteCount int, ok bool) {
 	value := this
 	encodedByteCount = this.EncodedSize()
 	if encodedByteCount > len(buffer) {
-		return 0, fmt.Errorf("%v free bytes required to encode, but only %v available", this.EncodedSize(), len(buffer))
+		return encodedByteCount, false
 	}
 	start := len(buffer) - encodedByteCount
 	if value == 0 {
 		buffer[start] = 0
-		return 1, nil
+		return 1, true
 	}
 
 	groupCount := encodedByteCount
@@ -119,28 +116,28 @@ func (this Lvlq) EncodeReversedTo(buffer []byte) (encodedByteCount int, err erro
 		value >>= 7
 	}
 
-	return encodedByteCount, nil
+	return encodedByteCount, true
 }
 
 // Decode this RVLQ in reverse order from the end of a buffer. Unlike DecodeFrom(),
 // the reversed version must have all encoded bytes present in the buffer to
 // decode.
-func (this *Lvlq) DecodeReversedFrom(buffer []byte) (decodedByteCount int, err error) {
+func (this *Lvlq) DecodeReversedFrom(buffer []byte) (decodedByteCount int, ok bool) {
 	for i := len(buffer) - 1; i >= 0; i-- {
 		v := buffer[i]
 		*this = *this>>7 | (Lvlq(v&0x7f) << 57)
 		decodedByteCount++
 		if v&0x80 == 0 {
-			return decodedByteCount, nil
+			return decodedByteCount, true
 		}
 	}
-	return 0, fmt.Errorf("Buffer does not contain the complete encoded reverse RVLQ value")
+	return decodedByteCount, false
 }
 
 // Decode a RVLQ value in reverse order from the end of a buffer. Unlike DecodeFrom(),
 // the reversed version must have all encoded bytes present in the buffer to
 // decode.
-func DecodeLvlqReversedFrom(buffer []byte) (value Lvlq, decodedByteCount int, err error) {
-	decodedByteCount, err = value.DecodeReversedFrom(buffer)
-	return value, decodedByteCount, err
+func DecodeLvlqReversedFrom(buffer []byte) (value Lvlq, decodedByteCount int, ok bool) {
+	decodedByteCount, ok = value.DecodeReversedFrom(buffer)
+	return value, decodedByteCount, ok
 }

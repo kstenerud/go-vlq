@@ -63,18 +63,18 @@ Result:
 
 ```golang
 func readme_example_reversed() {
-    // Reversed mode, which allows reading the value from the end of a buffer
+	// Reversed mode, which allows reading the value from the end of a buffer
 
-    value := Rvlq(30000)
-    buffer := make([]byte, 10)
-    value.EncodeReversedTo(buffer)
-    fmt.Printf("Encoded %v into the byte sequence %v\n", value, buffer)
+	value := Rvlq(30000)
+	buffer := make([]byte, 10)
+	value.EncodeReversedTo(buffer)
+	fmt.Printf("Encoded %v into the byte sequence %v\n", value, buffer)
 
-    decodedValue, bytesUsed, err := DecodeRvlqReversedFrom(buffer)
-    if err != nil {
-        // TODO: Error handling
-    }
-    fmt.Printf("Decoded value %v from %v bytes\n", decodedValue, bytesUsed)
+	decodedValue, bytesUsed, ok := DecodeRvlqReversedFrom(buffer)
+	if !ok {
+		// TODO: Didn't find end of sequence
+	}
+	fmt.Printf("Decoded value %v from %v bytes\n", decodedValue, bytesUsed)
 }
 ```
 
