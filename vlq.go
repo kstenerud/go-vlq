@@ -12,6 +12,9 @@ import (
 	"fmt"
 )
 
+// Maximum byte length that this library will encode (for a 64-bit value)
+const MaxEncodeLength = 10
+
 // Returns true if the encoded VLQ is extended (prepended with 0x80)
 func IsExtended(buffer []byte) bool {
 	return buffer[0] == 0x80

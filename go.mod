@@ -1,3 +1,3 @@
 module github.com/kstenerud/go-vlq
 
-go 1.12
+go 1.10
